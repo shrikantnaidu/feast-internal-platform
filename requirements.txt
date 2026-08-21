@@ -1,0 +1,4 @@
+feast[postgres,redis]
+grpcio
+grpcio-health-checking
+grpcio-reflection
