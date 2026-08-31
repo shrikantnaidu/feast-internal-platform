@@ -21,12 +21,13 @@ feast/
 
 ```
 feast/
-├── .env                 # Database credentials and exposed port configuration
+├── .env.example         # Safe configuration template
+├── .env                 # Local secrets and exposed port configuration (not committed)
 ├── Dockerfile           # Python 3.11-slim + Feast with Postgres, Redis, and gRPC extras
 ├── docker-compose.yml   # Multi-service container orchestration definition
 ├── requirements.txt     # Feast package requirements (feast[postgres,redis], grpcio, etc.)
 └── feature_repo/        # Feast feature definitions repository
-    └── feature_store.yaml # Infrastructure configuration (PostgreSQL + Redis paths)
+    └── feature_store.yaml.template # Runtime-rendered PostgreSQL + Redis configuration
 ```
 
 ---
@@ -35,10 +36,13 @@ feast/
 
 ### 1. Configure Environment (`.env`)
 
+Copy `.env.example` to `.env`, then replace both `change-me` values with strong secrets.
+
 ```env
 POSTGRES_USER=feast
-POSTGRES_PASSWORD=feast
+POSTGRES_PASSWORD=change-me
 POSTGRES_DB=feast
+REDIS_PASSWORD=change-me
 FEAST_PORT=6566
 FEAST_UI_PORT=8888
 ```
@@ -69,13 +73,18 @@ curl -I http://localhost:8888
 - **Feast Feature Server API**: [http://localhost:6566](http://localhost:6566)
 - **Feast Web UI**: [http://localhost:8888](http://localhost:8888)
 
+The default Compose configuration binds both endpoints to localhost. The container entrypoint renders `feature_store.yaml` from runtime environment variables before running `feast-init`, `feast`, or `feast-ui`.
+
 ---
 
 ## ⚙️ Adding & Applying Feature Definitions
 
-1. Define your entities, data sources, and feature views in Python files under [feature_repo/](file:///s:/lr-work/airflow-and-mlflow-revamp/feast/feature_repo/).
+1. Define your entities, data sources, and feature views in Python files under [feature_repo/](./feature_repo/).
 2. Apply changes to the central SQL registry and online store:
    ```bash
+   # Rebuild first so the image contains the latest definitions
+   docker compose build
+
    # Re-run the one-shot init container to apply updates
    docker compose run --rm feast-init
    ```
@@ -112,4 +121,4 @@ print(response.json())
 | View feature server logs | `docker compose logs -f feast` |
 | View UI logs | `docker compose logs -f feast-ui` |
 | Run manual `feast apply` | `docker compose run --rm feast-init` |
-| Tear down + wipe storage | `docker compose down -v` |
+| Tear down + wipe storage | `docker compose down -v` *(deletes database and Redis volumes)* |

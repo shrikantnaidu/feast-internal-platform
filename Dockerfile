@@ -8,7 +8,11 @@ COPY requirements.txt /tmp/requirements.txt
 RUN UV_HTTP_TIMEOUT=300 uv pip install --system --no-cache -r /tmp/requirements.txt \
     && rm /tmp/requirements.txt
 
+# Render the repository configuration from runtime secrets before each Feast command.
+COPY feast-entrypoint.py /usr/local/bin/feast-entrypoint.py
+
 # Copy feature repository
 COPY feature_repo/ /opt/feast/feature_repo/
 
 WORKDIR /opt/feast/feature_repo
+ENTRYPOINT ["python", "/usr/local/bin/feast-entrypoint.py"]
