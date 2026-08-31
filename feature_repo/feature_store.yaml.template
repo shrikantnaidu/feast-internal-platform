@@ -1,0 +1,17 @@
+project: lr_feast
+registry:
+  registry_type: sql
+  path: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+provider: local
+online_store:
+  type: redis
+  connection_string: "redis:6379,password=${REDIS_PASSWORD}"
+offline_store:
+  type: postgres
+  host: postgres
+  port: 5432
+  database: "${POSTGRES_DB}"
+  user: "${POSTGRES_USER}"
+  password: "${POSTGRES_PASSWORD}"
+  db_schema: public
+  sslmode: disable
